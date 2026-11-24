@@ -7,7 +7,8 @@
         "data": {
           "channels": "Channels",
           "epg_url": "XMLTV guide URL (.xml or .xml.gz)",
-          "refresh_hours": "Refresh guide every"
+          "refresh_hours": "Refresh guide every",
+          "fallback_epg_url": "Fallback XMLTV guide URL (empty = disabled)"
         }
       }
     },
@@ -26,7 +27,8 @@
         "data": {
           "channels": "Channels",
           "epg_url": "XMLTV guide URL (.xml or .xml.gz)",
-          "refresh_hours": "Refresh guide every"
+          "refresh_hours": "Refresh guide every",
+          "fallback_epg_url": "Fallback XMLTV guide URL (empty = disabled)"
         }
       }
     },
@@ -72,6 +74,12 @@
         "dtt": "Free-to-air",
         "sky": "Sky"
       }
+    }
+  },
+  "issues": {
+    "guide_unavailable": {
+      "title": "The TV guide is not updating",
+      "description": "TV Italia cannot download the TV guide (last successful update: {since}).\n\nError: {error}\n\nThis is usually a temporary problem with the source: the integration retries every 15 minutes and this notice disappears as soon as the guide is available again. If it lasts for days, you can change the guide URLs in Settings → Devices & services → TV Italia → Configure."
     }
   }
 }

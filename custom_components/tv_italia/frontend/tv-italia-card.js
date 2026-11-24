@@ -15,7 +15,7 @@
  *   entities:                # opzionale: di default tutti i canali TV Italia
  *     - sensor.tv_rai1
  */
-const CARD_VERSION = "1.5.0";
+const CARD_VERSION = "1.6.0";
 
 const TAB_LABELS = { now: "In onda", next: "A seguire", prime: "Stasera" };
 

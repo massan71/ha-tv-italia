@@ -7,9 +7,12 @@ DOMAIN = "tv_italia"
 
 CONF_CHANNELS = "channels"
 CONF_EPG_URL = "epg_url"
+CONF_FALLBACK_EPG_URL = "fallback_epg_url"
 CONF_REFRESH_HOURS = "refresh_hours"
 
 DEFAULT_EPG_URL = "https://epgshare01.online/epgshare01/epg_ripper_IT1.xml.gz"
+# Guida di riserva, usata solo se la principale non risponde o mancano canali
+DEFAULT_FALLBACK_EPG_URL = "https://www.epgitalia.tv/gzip"
 DEFAULT_REFRESH_HOURS = 6
 
 # Ora (locale) usata per calcolare la "prima serata"
@@ -20,7 +23,7 @@ PRIME_TIME_MINUTE = 30
 UPCOMING_COUNT = 6
 
 CARD_URL = "/tv_italia/tv-italia-card.js"
-CARD_VERSION = "1.5.0"
+CARD_VERSION = "1.6.0"
 
 
 @dataclass(frozen=True)

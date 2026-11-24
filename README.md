@@ -1,5 +1,7 @@
 <img src="icon.png" alt="" width="96" align="right">
 
+[![Validate](https://github.com/massan71/ha-tv-italia/actions/workflows/validate.yml/badge.svg)](https://github.com/massan71/ha-tv-italia/actions/workflows/validate.yml)
+
 # TV Italia per Home Assistant
 
 Integrazione personalizzata che mostra i **canali televisivi italiani** (digitale terrestre e Sky) con la guida TV:
@@ -12,6 +14,8 @@ programma in onda, avanzamento, programma successivo e **prima serata**.
 - Card Lovelace inclusa (`custom:tv-italia-card`), compatta e scorrevole, caricata automaticamente, con le schede "In onda" e "A seguire".
 - Configurazione da interfaccia, nessun YAML.
 - Guida da una sorgente XMLTV pubblica (di default [epgshare01](https://epgshare01.online)), sostituibile con qualsiasi URL XMLTV `.xml` o `.xml.gz`.
+- **Guida di riserva** ([epgitalia.tv](https://www.epgitalia.tv)): usata solo se la principale non risponde o le mancano dei canali. Si può cambiare o disattivare (campo vuoto) nelle opzioni.
+- Se la guida non si aggiorna da oltre 12 ore compare un avviso in **Impostazioni → Riparazioni**, che sparisce da solo quando torna disponibile.
 
 ## Installazione
 
@@ -111,6 +115,14 @@ actions:
 
 ## Icona
 L'icona è inclusa in `custom_components/tv_italia/brand/` e viene mostrata da Home Assistant 2026.3 in poi.
+
+## Sviluppo
+
+```bash
+pip install pytest && pytest
+```
+
+A ogni push GitHub Actions esegue hassfest, la validazione HACS e i test.
 
 ## Note
 La guida TV proviene da servizi di terze parti: completezza e accuratezza dipendono dalla sorgente scelta.

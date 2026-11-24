@@ -89,33 +89,61 @@ def parse_xmltv(
     raw: bytes,
     window_start: datetime,
     window_end: datetime,
+    wanted_ids: set[str] | None = None,
+    wanted_names: set[str] | None = None,
 ) -> dict[str, ChannelGuide]:
     """Analizza un file XMLTV e restituisce i palinsesti per ID canale.
 
     Mantiene solo i programmi che si sovrappongono a [window_start, window_end].
+    Se sono indicati `wanted_ids`/`wanted_names` (nomi gia' normalizzati) tiene
+    solo i canali corrispondenti: le guide complete hanno migliaia di canali e
+    tenerli tutti in memoria sarebbe uno spreco. Il file .gz viene decompresso
+    a flusso, senza caricarlo tutto in memoria.
     """
-    data = decompress(raw)
+    filtering = wanted_ids is not None or wanted_names is not None
+    wanted_ids = wanted_ids or set()
+    wanted_names = wanted_names or set()
+    keep_cache: dict[str, bool] = {}
+
+    def keep(epg_id: str, names: list[str] | None = None) -> bool:
+        if not filtering:
+            return True
+        if epg_id in keep_cache and names is None:
+            return keep_cache[epg_id]
+        candidates = names or [epg_id.rsplit(".", 1)[0]]
+        result = epg_id in wanted_ids or any(
+            normalize_name(n) in wanted_names for n in candidates
+        )
+        keep_cache[epg_id] = result
+        return result
+
+    source = (
+        gzip.GzipFile(fileobj=io.BytesIO(raw)) if raw[:2] == b"\x1f\x8b" else io.BytesIO(raw)
+    )
     guides: dict[str, ChannelGuide] = {}
 
-    for _event, elem in ET.iterparse(io.BytesIO(data), events=("end",)):
+    for _event, elem in ET.iterparse(source, events=("end",)):
         if elem.tag == "channel":
             epg_id = elem.get("id")
             if epg_id:
-                guide = guides.setdefault(epg_id, ChannelGuide(epg_id))
-                guide.display_names = [
-                    d.text.strip() for d in elem.findall("display-name") if d.text
-                ]
-                icon = elem.find("icon")
-                if icon is not None and icon.get("src"):
-                    guide.icon = icon.get("src")
+                names = [d.text.strip() for d in elem.findall("display-name") if d.text]
+                if keep(epg_id, names):
+                    guide = guides.setdefault(epg_id, ChannelGuide(epg_id))
+                    guide.display_names = names
+                    icon = elem.find("icon")
+                    if icon is not None and icon.get("src"):
+                        guide.icon = icon.get("src")
             elem.clear()
 
         elif elem.tag == "programme":
             epg_id = elem.get("channel")
+            if not epg_id or not keep(epg_id):
+                elem.clear()
+                continue
             start = parse_xmltv_time(elem.get("start", ""))
             stop = parse_xmltv_time(elem.get("stop", "")) if elem.get("stop") else None
             title = _text(elem, "title")
-            if epg_id and start and title:
+            if start and title:
                 if stop is None:
                     stop = start + timedelta(minutes=30)
                 if stop > window_start and start < window_end:

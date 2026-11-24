@@ -7,7 +7,8 @@
         "data": {
           "channels": "Canali",
           "epg_url": "URL guida XMLTV (.xml o .xml.gz)",
-          "refresh_hours": "Aggiorna la guida ogni"
+          "refresh_hours": "Aggiorna la guida ogni",
+          "fallback_epg_url": "URL guida di riserva (vuoto = disattivata)"
         }
       }
     },
@@ -26,7 +27,8 @@
         "data": {
           "channels": "Canali",
           "epg_url": "URL guida XMLTV (.xml o .xml.gz)",
-          "refresh_hours": "Aggiorna la guida ogni"
+          "refresh_hours": "Aggiorna la guida ogni",
+          "fallback_epg_url": "URL guida di riserva (vuoto = disattivata)"
         }
       }
     },
@@ -72,6 +74,12 @@
         "dtt": "Digitale terrestre",
         "sky": "Sky"
       }
+    }
+  },
+  "issues": {
+    "guide_unavailable": {
+      "title": "La guida TV non si aggiorna",
+      "description": "TV Italia non riesce a scaricare la guida TV (ultimo aggiornamento riuscito: {since}).\n\nErrore: {error}\n\nDi solito è un problema temporaneo della fonte: l'integrazione riprova da sola ogni 15 minuti e questo avviso sparisce appena la guida torna disponibile. Se dura giorni, puoi cambiare gli indirizzi delle guide da Impostazioni → Dispositivi e servizi → TV Italia → Configura."
     }
   }
 }

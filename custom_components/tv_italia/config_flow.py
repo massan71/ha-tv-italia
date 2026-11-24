@@ -24,9 +24,11 @@ from .const import (
     CHANNELS,
     CONF_CHANNELS,
     CONF_EPG_URL,
+    CONF_FALLBACK_EPG_URL,
     CONF_REFRESH_HOURS,
     DEFAULT_CHANNELS,
     DEFAULT_EPG_URL,
+    DEFAULT_FALLBACK_EPG_URL,
     DEFAULT_REFRESH_HOURS,
     DOMAIN,
 )
@@ -54,6 +56,15 @@ def _schema(defaults: dict[str, Any]) -> vol.Schema:
             vol.Required(
                 CONF_EPG_URL, default=defaults.get(CONF_EPG_URL, DEFAULT_EPG_URL)
             ): TextSelector(TextSelectorConfig(type=TextSelectorType.URL)),
+            # Facoltativo: lasciandolo vuoto la guida di riserva e' disattivata
+            vol.Optional(
+                CONF_FALLBACK_EPG_URL,
+                description={
+                    "suggested_value": defaults.get(
+                        CONF_FALLBACK_EPG_URL, DEFAULT_FALLBACK_EPG_URL
+                    )
+                },
+            ): TextSelector(TextSelectorConfig(type=TextSelectorType.URL)),
             vol.Required(
                 CONF_REFRESH_HOURS,
                 default=defaults.get(CONF_REFRESH_HOURS, DEFAULT_REFRESH_HOURS),
@@ -73,7 +84,18 @@ def _validate(user_input: dict[str, Any]) -> dict[str, str]:
         errors[CONF_CHANNELS] = "no_channels"
     if not str(user_input.get(CONF_EPG_URL, "")).startswith(("http://", "https://")):
         errors[CONF_EPG_URL] = "invalid_url"
+    fallback = str(user_input.get(CONF_FALLBACK_EPG_URL) or "")
+    if fallback and not fallback.startswith(("http://", "https://")):
+        errors[CONF_FALLBACK_EPG_URL] = "invalid_url"
     return errors
+
+
+def _clean(user_input: dict[str, Any]) -> dict[str, Any]:
+    data = dict(user_input)
+    data[CONF_REFRESH_HOURS] = int(data[CONF_REFRESH_HOURS])
+    # Campo svuotato = riserva disattivata (stringa vuota, non il default)
+    data[CONF_FALLBACK_EPG_URL] = str(data.get(CONF_FALLBACK_EPG_URL) or "").strip()
+    return data
 
 
 class TvItaliaConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -88,8 +110,7 @@ class TvItaliaConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             errors = _validate(user_input)
             if not errors:
-                user_input[CONF_REFRESH_HOURS] = int(user_input[CONF_REFRESH_HOURS])
-                return self.async_create_entry(title="TV Italia", data=user_input)
+                return self.async_create_entry(title="TV Italia", data=_clean(user_input))
 
         return self.async_show_form(
             step_id="user", data_schema=_schema(user_input or {}), errors=errors
@@ -111,8 +132,7 @@ class TvItaliaOptionsFlow(OptionsFlow):
         if user_input is not None:
             errors = _validate(user_input)
             if not errors:
-                user_input[CONF_REFRESH_HOURS] = int(user_input[CONF_REFRESH_HOURS])
-                return self.async_create_entry(data=user_input)
+                return self.async_create_entry(data=_clean(user_input))
 
         current = {**self.config_entry.data, **self.config_entry.options}
         return self.async_show_form(

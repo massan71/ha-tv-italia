@@ -144,6 +144,7 @@ class TvChannelSensor(CoordinatorEntity[TvItaliaCoordinator], SensorEntity):
         attrs["prime_time"] = _short(prime_time_programme(self._programmes, now), genre)
         if self.coordinator.last_download:
             attrs["guide_updated"] = self.coordinator.last_download.isoformat()
+        attrs["guide_source"] = self.coordinator.channel_source.get(self._channel.key)
         return attrs
 
     @callback

@@ -9,6 +9,7 @@ import aiohttp
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
@@ -18,22 +19,34 @@ from .const import (
     CHANNELS_BY_KEY,
     CONF_CHANNELS,
     CONF_EPG_URL,
+    CONF_FALLBACK_EPG_URL,
     CONF_REFRESH_HOURS,
     DEFAULT_CHANNELS,
     DEFAULT_EPG_URL,
+    DEFAULT_FALLBACK_EPG_URL,
     DEFAULT_REFRESH_HOURS,
     DOMAIN,
     PRIME_TIME_HOUR,
     PRIME_TIME_MINUTE,
 )
-from .epg import ChannelGuide, Programme, parse_xmltv, programme_at, resolve_channel
+from .epg import (
+    ChannelGuide,
+    Programme,
+    normalize_name,
+    parse_xmltv,
+    programme_at,
+    resolve_channel,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
 TICK = timedelta(minutes=1)
 # Dopo un errore riprova il download non prima di questo intervallo
 RETRY_AFTER = timedelta(minutes=15)
-LOGO_USER_AGENT = "HomeAssistant-TVItalia/1.4 (https://github.com/massan71/ha-tv-italia)"
+# Se la guida non si aggiorna da piu' di cosi', compare un avviso in Riparazioni
+STALE_AFTER = timedelta(hours=12)
+ISSUE_GUIDE_UNAVAILABLE = "guide_unavailable"
+USER_AGENT = "HomeAssistant-TVItalia (https://github.com/massan71/ha-tv-italia)"
 
 
 class TvItaliaCoordinator(DataUpdateCoordinator[dict[str, ChannelGuide | None]]):
@@ -56,6 +69,8 @@ class TvItaliaCoordinator(DataUpdateCoordinator[dict[str, ChannelGuide | None]])
         self._last_download: datetime | None = None
         self._last_attempt: datetime | None = None
         self._logos: dict[str, str | None] = {}
+        # Per ogni canale: "primary" o "fallback", la fonte da cui arriva la guida
+        self.channel_source: dict[str, str] = {}
         self._favorites_store: Store[list[str]] = Store(hass, 1, f"{DOMAIN}.favorites")
         self.favorites: set[str] = set()
 
@@ -100,7 +115,7 @@ class TvItaliaCoordinator(DataUpdateCoordinator[dict[str, ChannelGuide | None]])
                 async with session.get(
                     url,
                     timeout=aiohttp.ClientTimeout(total=10),
-                    headers={"User-Agent": LOGO_USER_AGENT},
+                    headers={"User-Agent": USER_AGENT},
                 ) as resp:
                     return resp.status == 200 and resp.content_type.startswith("image/")
             except (aiohttp.ClientError, TimeoutError):
@@ -149,43 +164,118 @@ class TvItaliaCoordinator(DataUpdateCoordinator[dict[str, ChannelGuide | None]])
         # Evita di martellare il server dopo un download fallito
         return not (self._last_attempt and now - self._last_attempt < RETRY_AFTER)
 
+    @property
+    def sources(self) -> list[tuple[str, str]]:
+        """Fonti della guida da provare in ordine: (nome, url)."""
+        primary = self.options.get(CONF_EPG_URL, DEFAULT_EPG_URL)
+        fallback = self.options.get(CONF_FALLBACK_EPG_URL, DEFAULT_FALLBACK_EPG_URL)
+        sources = [("primary", primary)]
+        if fallback and fallback != primary:
+            sources.append(("fallback", fallback))
+        return sources
+
+    async def _async_fetch(self, url: str, now: datetime) -> dict[str, ChannelGuide]:
+        """Scarica e analizza una guida, tenendo solo i canali che servono."""
+        wanted_ids: set[str] = set()
+        wanted_names: set[str] = set()
+        for key in self.channel_keys:
+            channel = CHANNELS_BY_KEY[key]
+            wanted_ids.update(channel.epg_ids)
+            wanted_names.add(normalize_name(channel.name))
+
+        session = async_get_clientsession(self.hass)
+        async with session.get(
+            url,
+            timeout=aiohttp.ClientTimeout(total=300),
+            headers={"User-Agent": USER_AGENT},
+        ) as resp:
+            resp.raise_for_status()
+            raw = await resp.read()
+        return await self.hass.async_add_executor_job(
+            parse_xmltv,
+            raw,
+            now - timedelta(hours=6),
+            now + timedelta(days=2),
+            wanted_ids,
+            wanted_names,
+        )
+
+    def _report_failure(self, now: datetime, error: str) -> None:
+        """Crea l'avviso in Riparazioni se la guida e' ferma da troppo."""
+        if self._last_download and now - self._last_download < STALE_AFTER:
+            return
+        since = (
+            dt_util.as_local(self._last_download).strftime("%d/%m %H:%M")
+            if self._last_download
+            else "mai"
+        )
+        ir.async_create_issue(
+            self.hass,
+            DOMAIN,
+            ISSUE_GUIDE_UNAVAILABLE,
+            is_fixable=False,
+            severity=ir.IssueSeverity.WARNING,
+            translation_key=ISSUE_GUIDE_UNAVAILABLE,
+            translation_placeholders={"since": since, "error": error[:400]},
+        )
+
     async def _async_update_data(self) -> dict[str, ChannelGuide | None]:
         now = dt_util.utcnow()
         if not self._needs_download(now):
             return self.data
 
         self._last_attempt = now
-        url = self.options.get(CONF_EPG_URL, DEFAULT_EPG_URL)
-        session = async_get_clientsession(self.hass)
-        try:
-            async with session.get(url, timeout=aiohttp.ClientTimeout(total=120)) as resp:
-                resp.raise_for_status()
-                raw = await resp.read()
-        except (aiohttp.ClientError, TimeoutError) as err:
+        keys = self.channel_keys
+        result: dict[str, ChannelGuide | None] = dict.fromkeys(keys)
+        source_of: dict[str, str] = {}
+        downloaded: list[dict[str, ChannelGuide]] = []
+        errors: list[str] = []
+
+        # Prova la fonte principale; la riserva solo se mancano canali
+        for name, url in self.sources:
+            missing = [k for k in keys if result[k] is None]
+            if not missing:
+                break
+            try:
+                guides = await self._async_fetch(url, now)
+            except aiohttp.ClientResponseError as err:
+                errors.append(f"{url}: HTTP {err.status}")
+                _LOGGER.warning("Download guida TV fallito da %s: HTTP %s", url, err.status)
+                continue
+            except (aiohttp.ClientError, TimeoutError) as err:
+                errors.append(f"{url}: {err or type(err).__name__}")
+                _LOGGER.warning("Download guida TV fallito da %s: %s", url, err)
+                continue
+            except Exception as err:  # noqa: BLE001 - XML malformato o simili
+                errors.append(f"{url}: guida non valida ({err})")
+                _LOGGER.warning("Guida TV non valida da %s: %s", url, err)
+                continue
+            downloaded.append(guides)
+            for key in missing:
+                channel = CHANNELS_BY_KEY[key]
+                guide = resolve_channel(guides, channel.epg_ids, channel.name)
+                if guide is not None:
+                    result[key] = guide
+                    source_of[key] = name
+            if name == "fallback":
+                _LOGGER.info(
+                    "Guida di riserva usata per %d canali", sum(1 for v in source_of.values() if v == name)
+                )
+
+        if not any(result.values()):
+            error = "; ".join(errors) or "nessun canale trovato nelle guide"
+            self._report_failure(now, error)
             if self.data:
-                _LOGGER.warning("Download guida TV fallito, uso i dati in cache: %s", err)
+                _LOGGER.warning("Guida TV non aggiornata, uso i dati in cache: %s", error)
                 return self.data
-            raise UpdateFailed(f"Impossibile scaricare la guida TV da {url}: {err}") from err
+            raise UpdateFailed(f"Impossibile scaricare la guida TV: {error}")
 
-        try:
-            guides = await self.hass.async_add_executor_job(
-                parse_xmltv, raw, now - timedelta(hours=6), now + timedelta(days=2)
-            )
-        except Exception as err:  # XML malformato
-            if self.data:
-                _LOGGER.warning("Guida TV non valida, uso i dati in cache: %s", err)
-                return self.data
-            raise UpdateFailed(f"Guida TV non valida: {err}") from err
-
-        result: dict[str, ChannelGuide | None] = {}
-        for key in self.channel_keys:
-            channel = CHANNELS_BY_KEY[key]
-            guide = resolve_channel(guides, channel.epg_ids, channel.name)
-            if guide is None:
-                _LOGGER.debug("Nessun palinsesto trovato per %s", channel.name)
-            result[key] = guide
-
-        self._logos = await self._async_pick_logos(guides, result)
+        ir.async_delete_issue(self.hass, DOMAIN, ISSUE_GUIDE_UNAVAILABLE)
+        merged: dict[str, ChannelGuide] = {}
+        for guides in reversed(downloaded):  # la principale vince sui conflitti
+            merged.update(guides)
+        self._logos = await self._async_pick_logos(merged, result)
+        self.channel_source = source_of
         self._last_download = now
         _LOGGER.debug(
             "Guida TV aggiornata: %d/%d canali con palinsesto, %d con logo",

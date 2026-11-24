@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tv>
+  <channel id="Rai1.it"><display-name lang="it">Rai 1</display-name></channel>
+  <channel id="Rai.1.HD..101.it"><display-name lang="it">Rai 1 HD</display-name><icon src="https://example.org/rai1.png"/></channel>
+  <channel id="Canale.5.it"><display-name lang="it">Canale 5</display-name></channel>
+  <channel id="Other.it"><display-name lang="it">Canale qualsiasi</display-name></channel>
+  <programme start="20261124190000 +0000" stop="20261124203000 +0000" channel="Rai1.it">
+    <title lang="it">Tg1</title><category lang="it">Informazione</category><category lang="it">Notiziario</category>
+  </programme>
+  <programme start="20261124203000 +0000" stop="20261124214000 +0000" channel="Rai1.it">
+    <title lang="it">Una finestra vista lago</title><sub-title>Parte 1</sub-title><category lang="it">Intrattenimento</category><category lang="it">Fiction</category>
+  </programme>
+  <programme start="20261124203000 +0000" stop="20261124214000 +0000" channel="Rai1.it">
+    <title lang="it">Duplicato</title>
+  </programme>
+  <programme start="20261124214000 +0000" stop="20261124230000 +0000" channel="Rai1.it">
+    <title lang="it">Porta a Porta</title>
+  </programme>
+  <programme start="20261124202000 +0000" stop="20261124224200 +0000" channel="Canale.5.it">
+    <title lang="it">Partita</title><category lang="it">Sport</category><category lang="it">Calcio</category>
+  </programme>
+  <programme start="20261124200000 +0000" stop="20261124210000 +0000" channel="Other.it">
+    <title lang="it">Non serve</title>
+  </programme>
+  <programme start="20261120200000 +0000" stop="20261120210000 +0000" channel="Rai1.it">
+    <title lang="it">Vecchio</title>
+  </programme>
+</tv>
