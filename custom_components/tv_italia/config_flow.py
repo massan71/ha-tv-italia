@@ -38,7 +38,9 @@ def _schema(defaults: dict[str, Any]) -> vol.Schema:
             value=c.key,
             label=f"{c.number} · {c.name}" if c.number else c.name,
         )
-        for c in sorted(CHANNELS, key=lambda c: (c.number == 0, c.number))
+        for c in sorted(
+            CHANNELS, key=lambda c: (c.platform != "dtt", c.number == 0, c.number)
+        )
     ]
     return vol.Schema(
         {

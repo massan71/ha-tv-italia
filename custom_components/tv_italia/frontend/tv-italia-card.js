@@ -7,10 +7,11 @@
  *   view: now                # now | prime   (vista iniziale)
  *   show_next: false         # mostra anche il programma successivo
  *   show_logo: true          # mostra i loghi dei canali
+ *   platform: all            # all | dtt (digitale terrestre) | sky
  *   entities:                # opzionale: di default tutti i canali TV Italia
  *     - sensor.tv_rai1
  */
-const CARD_VERSION = "1.1.0";
+const CARD_VERSION = "1.2.0";
 
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -64,7 +65,12 @@ class TvItaliaCard extends HTMLElement {
     if (config.view && !["now", "prime"].includes(config.view)) {
       throw new Error("view deve essere 'now' oppure 'prime'");
     }
-    this._config = { title: "Guida TV", height: 320, view: "now", show_next: false, show_logo: true, ...config };
+    if (config.platform && !["all", "dtt", "sky"].includes(config.platform)) {
+      throw new Error("platform deve essere 'all', 'dtt' oppure 'sky'");
+    }
+    this._config = {
+      title: "Guida TV", height: 320, view: "now", show_next: false, show_logo: true, platform: "all", ...config,
+    };
     this._view = this._config.view;
     this._sig = null;
     this._built = false;
@@ -92,6 +98,8 @@ class TvItaliaCard extends HTMLElement {
     }
     return Object.values(this._hass.states)
       .filter((s) => s.attributes && s.attributes.source === "tv_italia")
+      .filter((s) => this._config.platform === "all"
+        || (s.attributes.channel_platform || "dtt") === this._config.platform)
       .sort((a, b) => (a.attributes.channel_number || 999) - (b.attributes.channel_number || 999))
       .map((s) => s.entity_id);
   }

@@ -42,7 +42,8 @@ async def async_setup_entry(
 
     # Ordine del telecomando: Rai 1, Rai 2, Rai 3, Rete 4, ...
     channels = sorted(
-        (CHANNELS_BY_KEY[k] for k in keys), key=lambda c: (c.number == 0, c.number)
+        (CHANNELS_BY_KEY[k] for k in keys),
+        key=lambda c: (c.platform != "dtt", c.number == 0, c.number),
     )
     async_add_entities(TvChannelSensor(coordinator, c) for c in channels)
 
@@ -76,8 +77,9 @@ class TvChannelSensor(CoordinatorEntity[TvItaliaCoordinator], SensorEntity):
         self._attr_unique_id = f"{entry_id}_{channel.key}"
         # Il numero davanti al nome fa si' che Home Assistant, che ordina le
         # entita' alfabeticamente, le mostri nell'ordine del telecomando.
+        # Tre cifre perche' i canali Sky arrivano a 310 (001 < 020 < 108).
         self._attr_name = (
-            f"{channel.number:02d} · {channel.name}" if channel.number else channel.name
+            f"{channel.number:03d} · {channel.name}" if channel.number else channel.name
         )
         self.entity_id = f"sensor.tv_{channel.key}"
         self._attr_device_info = DeviceInfo(
@@ -131,6 +133,7 @@ class TvChannelSensor(CoordinatorEntity[TvItaliaCoordinator], SensorEntity):
             "channel_name": self._channel.name,
             "channel_number": self._channel.number or None,
             "channel_group": self._channel.group,
+            "channel_platform": self._channel.platform,
             "channel_logo": guide.icon if guide else None,
         }
         if current:

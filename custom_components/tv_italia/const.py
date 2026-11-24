@@ -20,7 +20,7 @@ PRIME_TIME_MINUTE = 30
 UPCOMING_COUNT = 6
 
 CARD_URL = "/tv_italia/tv-italia-card.js"
-CARD_VERSION = "1.1.0"
+CARD_VERSION = "1.2.0"
 
 
 @dataclass(frozen=True)
@@ -32,6 +32,7 @@ class Channel:
     number: int
     epg_ids: tuple[str, ...]
     group: str
+    platform: str = "dtt"  # "dtt" = digitale terrestre, "sky" = Sky
 
 
 # Canali del digitale terrestre nazionale, con numero LCN.
@@ -84,6 +85,42 @@ CHANNELS: tuple[Channel, ...] = (
     Channel("sportitalia", "Sportitalia", 60, ("Sportitalia.HD.it",), "Sportitalia"),
     Channel("supertennis", "SuperTennis", 64, ("SuperTennis.HD.it",), "FITP"),
     Channel("la7cinema", "LA7 Cinema", 0, ("LA7.CINEMA.it",), "La7"),
+    # --- Sky (numerazione del decoder Sky, novembre 2026) ---
+    Channel("skytg24", "Sky TG24", 100, ('Sky.TG24.it',), "Sky", "sky"),
+    Channel("skyuno", "Sky Uno", 108, ('Sky.Uno.it',), "Sky", "sky"),
+    Channel("skyuno1", "Sky Uno +1", 109, ('Sky.Uno.+.it',), "Sky", "sky"),
+    Channel("skyatlantic", "Sky Atlantic", 111, ('Sky.Atlantic.it',), "Sky", "sky"),
+    Channel("skyserie", "Sky Serie", 112, ('Sky.Serie.it',), "Sky", "sky"),
+    Channel("skyinvestigation", "Sky Investigation", 113, ('Sky.Investigation.it',), "Sky", "sky"),
+    Channel("skycollection", "Sky Collection", 114, ('Sky.Collection.it',), "Sky", "sky"),
+    Channel("skycrime", "Sky Crime", 115, ('Sky.Crime.it',), "Sky", "sky"),
+    Channel("skydocumentaries", "Sky Documentaries", 117, ('Sky.Documentaries.it',), "Sky", "sky"),
+    Channel("skyadventure", "Sky Adventure", 118, ('Sky.Adventure.it',), "Sky", "sky"),
+    Channel("skynature", "Sky Nature", 119, ('Sky.Nature.it',), "Sky", "sky"),
+    Channel("skyarte", "Sky Arte", 120, ('Sky.Arte.it',), "Sky", "sky"),
+    Channel("skysport24", "Sky Sport 24", 200, ('Sky.Sport.24.it',), "Sky", "sky"),
+    Channel("skysportuno", "Sky Sport Uno", 201, ('Sky.Sport.Uno.it',), "Sky", "sky"),
+    Channel("skysportcalcio", "Sky Sport Calcio", 202, ('Sky.Sport.Calcio.it',), "Sky", "sky"),
+    Channel("skysporttennis", "Sky Sport Tennis", 203, ('Sky.Sport.Tennis.it',), "Sky", "sky"),
+    Channel("skysportarena", "Sky Sport Arena", 204, ('Sky.Sport.Arena.it',), "Sky", "sky"),
+    Channel("skysportbasket", "Sky Sport Basket", 205, ('Sky.Sport.NBA.it',), "Sky", "sky"),
+    Channel("skysportmax", "Sky Sport Max", 206, ('Sky.Sport.Max.it',), "Sky", "sky"),
+    Channel("skysportf1", "Sky Sport F1", 207, ('Sky.Sport.F1.it',), "Sky", "sky"),
+    Channel("skysportmotogp", "Sky Sport MotoGP", 208, ('Sky.Sport.MotoGP.it',), "Sky", "sky"),
+    Channel("skysportgolf", "Sky Sport Golf", 209, ('Sky.Sport.Golf.it',), "Sky", "sky"),
+    Channel("skysportlegend", "Sky Sport Legend", 210, ('Sky.Sport.Legend.it',), "Sky", "sky"),
+    Channel("skysportmix", "Sky Sport Mix", 211, ('Sky.Sport.Mix.it',), "Sky", "sky"),
+    Channel("skysport4k", "Sky Sport 4K", 213, ('Sky.Sport.4K.it',), "Sky", "sky"),
+    Channel("skycinemauno", "Sky Cinema Uno", 301, ('Sky.Cinema.Uno.it',), "Sky", "sky"),
+    Channel("skycinemadue", "Sky Cinema Due", 302, ('Sky.Cinema.Due.it',), "Sky", "sky"),
+    Channel("skycinemacollection", "Sky Cinema Collection", 303, ('Sky.Cinema.Collection.it',), "Sky", "sky"),
+    Channel("skycinemafamily", "Sky Cinema Family", 304, ('Sky.Cinema.Family.it',), "Sky", "sky"),
+    Channel("skycinemaaction", "Sky Cinema Action", 305, ('Sky.Cinema.Action.it',), "Sky", "sky"),
+    Channel("skycinemasuspense", "Sky Cinema Suspense", 306, ('Sky.Cinema.Suspense.it',), "Sky", "sky"),
+    Channel("skycinemaromance", "Sky Cinema Romance", 307, ('Sky.Cinema.Romance.it',), "Sky", "sky"),
+    Channel("skycinemadrama", "Sky Cinema Drama", 308, ('Sky.Cinema.Drama.it',), "Sky", "sky"),
+    Channel("skycinemacomedy", "Sky Cinema Comedy", 309, ('Sky.Cinema.Comedy.it',), "Sky", "sky"),
+    Channel("skycinemauno24", "Sky Cinema Uno +24", 310, ('Sky.Cinema.Uno.+24.it',), "Sky", "sky"),
 )
 
 CHANNELS_BY_KEY: dict[str, Channel] = {c.key: c for c in CHANNELS}
