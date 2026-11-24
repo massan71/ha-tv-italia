@@ -108,8 +108,7 @@ class TvChannelSensor(CoordinatorEntity[TvItaliaCoordinator], SensorEntity):
 
     @property
     def entity_picture(self) -> str | None:
-        guide = (self.coordinator.data or {}).get(self._channel.key)
-        return guide.icon if guide else None
+        return self.coordinator.logo(self._channel.key)
 
     def _prime_time(self, now: datetime) -> Programme | None:
         local_now = dt_util.as_local(now)
@@ -125,7 +124,6 @@ class TvChannelSensor(CoordinatorEntity[TvItaliaCoordinator], SensorEntity):
     def extra_state_attributes(self) -> dict[str, Any]:
         now = dt_util.utcnow()
         current, upcoming = current_and_upcoming(self._programmes, now, UPCOMING_COUNT)
-        guide = (self.coordinator.data or {}).get(self._channel.key)
 
         attrs: dict[str, Any] = {
             "source": DOMAIN,
@@ -134,7 +132,7 @@ class TvChannelSensor(CoordinatorEntity[TvItaliaCoordinator], SensorEntity):
             "channel_number": self._channel.number or None,
             "channel_group": self._channel.group,
             "channel_platform": self._channel.platform,
-            "channel_logo": guide.icon if guide else None,
+            "channel_logo": self.coordinator.logo(self._channel.key),
         }
         if current:
             duration = (current.stop - current.start).total_seconds()

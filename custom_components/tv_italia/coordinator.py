@@ -1,6 +1,7 @@
 """Coordinator: scarica la guida XMLTV e aggiorna le entita' ogni minuto."""
 from __future__ import annotations
 
+import asyncio
 import logging
 from datetime import datetime, timedelta
 
@@ -29,6 +30,7 @@ _LOGGER = logging.getLogger(__name__)
 TICK = timedelta(minutes=1)
 # Dopo un errore riprova il download non prima di questo intervallo
 RETRY_AFTER = timedelta(minutes=15)
+LOGO_USER_AGENT = "HomeAssistant-TVItalia/1.4 (https://github.com/massan71/ha-tv-italia)"
 
 
 class TvItaliaCoordinator(DataUpdateCoordinator[dict[str, ChannelGuide | None]]):
@@ -50,6 +52,55 @@ class TvItaliaCoordinator(DataUpdateCoordinator[dict[str, ChannelGuide | None]])
         )
         self._last_download: datetime | None = None
         self._last_attempt: datetime | None = None
+        self._logos: dict[str, str | None] = {}
+
+    def logo(self, key: str) -> str | None:
+        """Logo funzionante del canale (verificato all'ultimo download)."""
+        return self._logos.get(key)
+
+    async def _async_pick_logos(
+        self, guides: dict[str, ChannelGuide], result: dict[str, ChannelGuide | None]
+    ) -> dict[str, str | None]:
+        """Sceglie per ogni canale il primo logo che si carica davvero.
+
+        Alcuni loghi della guida rispondono 403/404: si provano in ordine il
+        logo del palinsesto usato, quelli degli ID alternativi e infine il logo
+        di riserva definito in const.py.
+        """
+        session = async_get_clientsession(self.hass)
+        checked: dict[str, asyncio.Task[bool]] = {}
+
+        async def works(url: str) -> bool:
+            try:
+                async with session.get(
+                    url,
+                    timeout=aiohttp.ClientTimeout(total=10),
+                    headers={"User-Agent": LOGO_USER_AGENT},
+                ) as resp:
+                    return resp.status == 200 and resp.content_type.startswith("image/")
+            except (aiohttp.ClientError, TimeoutError):
+                return False
+
+        async def pick(key: str) -> str | None:
+            channel = CHANNELS_BY_KEY[key]
+            candidates: list[str] = []
+            if (guide := result.get(key)) and guide.icon:
+                candidates.append(guide.icon)
+            candidates += [
+                guides[i].icon for i in channel.epg_ids if i in guides and guides[i].icon
+            ]
+            if channel.logo:
+                candidates.append(channel.logo)
+            for url in dict.fromkeys(candidates):
+                if url not in checked:
+                    checked[url] = asyncio.ensure_future(works(url))
+                if await checked[url]:
+                    return url
+            return None
+
+        keys = list(result)
+        logos = await asyncio.gather(*(pick(k) for k in keys))
+        return dict(zip(keys, logos))
 
     @property
     def options(self) -> dict:
@@ -109,10 +160,12 @@ class TvItaliaCoordinator(DataUpdateCoordinator[dict[str, ChannelGuide | None]])
                 _LOGGER.debug("Nessun palinsesto trovato per %s", channel.name)
             result[key] = guide
 
+        self._logos = await self._async_pick_logos(guides, result)
         self._last_download = now
         _LOGGER.debug(
-            "Guida TV aggiornata: %d/%d canali con palinsesto",
+            "Guida TV aggiornata: %d/%d canali con palinsesto, %d con logo",
             sum(1 for g in result.values() if g),
             len(result),
+            sum(1 for u in self._logos.values() if u),
         )
         return result

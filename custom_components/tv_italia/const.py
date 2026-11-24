@@ -20,7 +20,7 @@ PRIME_TIME_MINUTE = 30
 UPCOMING_COUNT = 6
 
 CARD_URL = "/tv_italia/tv-italia-card.js"
-CARD_VERSION = "1.3.0"
+CARD_VERSION = "1.4.0"
 
 
 @dataclass(frozen=True)
@@ -33,6 +33,8 @@ class Channel:
     epg_ids: tuple[str, ...]
     group: str
     platform: str = "dtt"  # "dtt" = digitale terrestre, "sky" = Sky
+    # Logo di riserva (Wikimedia Commons) se quello della guida non funziona
+    logo: str | None = None
 
 
 # Canali del digitale terrestre nazionale, con numero LCN.
@@ -47,7 +49,8 @@ CHANNELS: tuple[Channel, ...] = (
     Channel("italia1", "Italia 1", 6, ("Italia.1.it",), "Mediaset"),
     Channel("la7", "LA7", 7, ("LA7.HD.it",), "La7"),
     Channel("tv8", "TV8", 8, ("TV8.HD.it",), "Sky"),
-    Channel("nove", "NOVE", 9, ("Nove.it", "NOVE.HD..149.it"), "Warner Bros. Discovery"),
+    Channel("nove", "NOVE", 9, ("Nove.it", "NOVE.HD..149.it"), "Warner Bros. Discovery",
+            logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2d/Nove_-_Logo_2017.svg/250px-Nove_-_Logo_2017.svg.png"),
     Channel("venti", "20 Mediaset", 20, ("20.it",), "Mediaset"),
     Channel("rai4", "Rai 4", 21, ("Rai4.it", "Rai.4..5021.it"), "Rai"),
     Channel("iris", "Iris", 22, ("Iris.it",), "Mediaset"),
@@ -56,17 +59,22 @@ CHANNELS: tuple[Channel, ...] = (
     Channel("raipremium", "Rai Premium", 25, ("RaiPremium.it", "Rai.Premium..5025.it"), "Rai"),
     Channel("cielo", "Cielo", 26, ("cielo.it",), "Sky"),
     Channel("twentyseven", "Twentyseven", 27, ("27.Twentyseven.it",), "Mediaset"),
-    Channel("la7d", "LA7d", 29, ("LA7D.it",), "La7"),
+    Channel("la7d", "LA7d", 29, ("LA7D.it",), "La7",
+            logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8b/LA7d_%282024%29.svg/250px-LA7d_%282024%29.svg.png"),
     Channel("la5", "La5", 30, ("La.5.it",), "Mediaset"),
-    Channel("realtime", "Real Time", 31, ("Real.Time.it", "Real.Time.HD..160.it"), "Warner Bros. Discovery"),
-    Channel("foodnetwork", "Food Network", 33, ("Food.Network.it", "Food.Network.HD..417.it"), "Warner Bros. Discovery"),
+    Channel("realtime", "Real Time", 31, ("Real.Time.it", "Real.Time.HD..160.it"), "Warner Bros. Discovery",
+            logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/8/89/Real_Time_HD_logo.png/250px-Real_Time_HD_logo.png"),
+    Channel("foodnetwork", "Food Network", 33, ("Food.Network.it", "Food.Network.HD..417.it"), "Warner Bros. Discovery",
+            logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/0/06/Food_Network_logo.svg/250px-Food_Network_logo.svg.png"),
     Channel("cine34", "Cine34", 34, ("Cine34.it",), "Mediaset"),
     Channel("focus", "Focus", 35, ("Focus.it",), "Mediaset"),
     Channel("warnertv", "Warner TV", 37, ("Warner.TV.it",), "Warner Bros. Discovery"),
-    Channel("giallo", "Giallo", 38, ("Giallo.TV.it", "GIALLO.HD..167.it"), "Warner Bros. Discovery"),
+    Channel("giallo", "Giallo", 38, ("Giallo.TV.it", "GIALLO.HD..167.it"), "Warner Bros. Discovery",
+            logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8e/Giallo_-_Logo_2014.svg/250px-Giallo_-_Logo_2014.svg.png"),
     Channel("topcrime", "Top Crime", 39, ("Top.Crime.it", "TOPcrime.HD..168.it"), "Mediaset"),
     Channel("boing", "Boing", 40, ("Boing.it",), "Mediaset"),
-    Channel("k2", "K2", 41, ("K2.it",), "Warner Bros. Discovery"),
+    Channel("k2", "K2", 41, ("K2.it",), "Warner Bros. Discovery",
+            logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b4/K2_new_logo.svg/250px-K2_new_logo.svg.png"),
     Channel("raigulp", "Rai Gulp", 42, ("RaiGulp.it", "Rai.Gulp..5042.it"), "Rai"),
     Channel("raiyoyo", "Rai Yoyo", 43, ("RaiYoyo.it", "Rai.Yoyo..5043.it"), "Rai"),
     Channel("frisbee", "Frisbee", 44, ("Frisbee.it",), "Warner Bros. Discovery"),
@@ -75,10 +83,12 @@ CHANNELS: tuple[Channel, ...] = (
     Channel("rainews24", "Rai News 24", 48, ("RaiNews24.it", "Rai.News.24..508.it"), "Rai"),
     Channel("italia2", "Italia 2", 49, ("Italia.2.it",), "Mediaset"),
     Channel("tgcom24", "TGCom24", 51, ("TGCom.it",), "Mediaset"),
-    Channel("dmax", "DMAX", 52, ("DMAX.it", "DMAX.HD..170.it"), "Warner Bros. Discovery"),
+    Channel("dmax", "DMAX", 52, ("DMAX.it", "DMAX.HD..170.it"), "Warner Bros. Discovery",
+            logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4f/DMAX_-_Logo_2016.svg/250px-DMAX_-_Logo_2016.svg.png"),
     Channel("raistoria", "Rai Storia", 54, ("RaiStoria.it", "Rai.Storia..5054.it"), "Rai"),
     Channel("mediasetextra", "Mediaset Extra", 55, ("Mediaset.Extra.it",), "Mediaset"),
-    Channel("hgtv", "HGTV", 56, ("HGTV.it", "HGTV.HD..418.it"), "Warner Bros. Discovery"),
+    Channel("hgtv", "HGTV", 56, ("HGTV.it", "HGTV.HD..418.it"), "Warner Bros. Discovery",
+            logo="https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a8/HGTV_2010.svg/250px-HGTV_2010.svg.png"),
     Channel("raiscuola", "Rai Scuola", 57, ("RaiScuola.it",), "Rai"),
     Channel("raisport", "Rai Sport", 58, ("RaiSport.it", "RAI.Sport...227.it"), "Rai"),
     Channel("motortrend", "Motor Trend", 59, ("Motor.Trend.it", "Motor.Trend.HD..419.it"), "Warner Bros. Discovery"),

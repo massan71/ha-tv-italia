@@ -12,7 +12,7 @@
  *   entities:                # opzionale: di default tutti i canali TV Italia
  *     - sensor.tv_rai1
  */
-const CARD_VERSION = "1.3.0";
+const CARD_VERSION = "1.4.0";
 
 const TAB_LABELS = { now: "In onda", next: "A seguire", prime: "Stasera" };
 
@@ -178,6 +178,14 @@ class TvItaliaCard extends HTMLElement {
       ? ents.map((id) => this._row(id)).join("")
       : `<div class="empty">Nessun canale. Aggiungi l'integrazione TV Italia.</div>`;
     this._list.scrollTop = scroll;
+    // Se un logo non si carica, al suo posto mostra il nome del canale
+    this._list.querySelectorAll("img.logo").forEach((img) =>
+      img.addEventListener("error", () => {
+        const badge = document.createElement("div");
+        badge.className = "logo badge";
+        badge.textContent = img.dataset.name;
+        img.replaceWith(badge);
+      }, { once: true }));
   }
 
   _row(id) {
@@ -189,7 +197,8 @@ class TvItaliaCard extends HTMLElement {
     let logo = "";
     if (this._config.show_logo) {
       logo = a.channel_logo
-        ? `<img class="logo" src="${esc(a.channel_logo)}" alt="" loading="lazy" referrerpolicy="no-referrer">`
+        ? `<img class="logo" src="${esc(a.channel_logo)}" alt="" loading="lazy" referrerpolicy="no-referrer"
+             data-name="${esc((a.channel_name || "TV").slice(0, 7))}">`
         : `<div class="logo badge">${esc((a.channel_name || "TV").slice(0, 7))}</div>`;
     }
 
