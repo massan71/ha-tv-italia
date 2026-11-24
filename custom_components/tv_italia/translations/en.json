@@ -1,0 +1,38 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "TV Italia",
+        "description": "Choose the Italian free-to-air channels to show. The guide is downloaded from a public XMLTV source.",
+        "data": {
+          "channels": "Channels",
+          "epg_url": "XMLTV guide URL (.xml or .xml.gz)",
+          "refresh_hours": "Refresh guide every"
+        }
+      }
+    },
+    "error": {
+      "no_channels": "Select at least one channel.",
+      "invalid_url": "Enter a valid http(s) URL."
+    },
+    "abort": {
+      "single_instance_allowed": "TV Italia is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "TV Italia options",
+        "data": {
+          "channels": "Channels",
+          "epg_url": "XMLTV guide URL (.xml or .xml.gz)",
+          "refresh_hours": "Refresh guide every"
+        }
+      }
+    },
+    "error": {
+      "no_channels": "Select at least one channel.",
+      "invalid_url": "Enter a valid http(s) URL."
+    }
+  }
+}

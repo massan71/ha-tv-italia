@@ -1,0 +1,66 @@
+# TV Italia per Home Assistant
+
+Integrazione personalizzata che mostra i **canali televisivi italiani del digitale terrestre** con la guida TV:
+programma in onda, avanzamento, programma successivo e **prima serata**.
+
+- Un sensore per canale (`sensor.tv_rai1`, `sensor.tv_canale5`, …): lo stato è il titolo in onda.
+- 46 canali nazionali con numerazione LCN (Rai, Mediaset, La7, TV8, NOVE, Cielo, Real Time, DMAX, …).
+- Card Lovelace inclusa (`custom:tv-italia-card`), caricata automaticamente, con le schede "In onda" e "Stasera".
+- Configurazione da interfaccia, nessun YAML.
+- Guida da una sorgente XMLTV pubblica (di default [epgshare01](https://epgshare01.online)), sostituibile con qualsiasi URL XMLTV `.xml` o `.xml.gz`.
+
+## Installazione
+
+### HACS (repository personalizzato)
+1. HACS → ⋮ → *Repository personalizzati* → aggiungi l'URL di questo repository, categoria **Integrazione**.
+2. Installa **TV Italia** e riavvia Home Assistant.
+
+### Manuale
+Copia `custom_components/tv_italia` in `<config>/custom_components/tv_italia` e riavvia Home Assistant.
+
+## Configurazione
+*Impostazioni → Dispositivi e servizi → Aggiungi integrazione → TV Italia*, poi scegli i canali.
+Puoi cambiare canali, URL della guida e frequenza di aggiornamento da **Configura**.
+
+## Card
+
+```yaml
+type: custom:tv-italia-card
+title: Guida TV
+view: now          # now | prime
+show_next: true
+# entities:        # opzionale, di default tutti i canali configurati
+#   - sensor.tv_rai1
+#   - sensor.tv_canale5
+```
+
+Se la card non compare dopo l'installazione, ricarica la pagina del browser (svuota la cache).
+
+## Attributi dei sensori
+
+| Attributo | Descrizione |
+|---|---|
+| `channel_number`, `channel_name`, `channel_group`, `channel_logo` | Dati del canale |
+| `start`, `end`, `progress`, `remaining_minutes` | Orari e avanzamento del programma in onda |
+| `subtitle`, `description`, `categories`, `episode`, `image` | Dettagli del programma |
+| `next_title`, `next_start` | Programma successivo |
+| `upcoming` | Lista dei prossimi 6 programmi |
+| `prime_time` | Programma in onda alle 21:30 di stasera |
+
+Esempio di automazione: notifica quando su Rai 1 inizia un programma che contiene "Montalbano".
+
+```yaml
+triggers:
+  - trigger: state
+    entity_id: sensor.tv_rai1
+conditions:
+  - condition: template
+    value_template: "{{ 'montalbano' in trigger.to_state.state | lower }}"
+actions:
+  - action: notify.notify
+    data:
+      message: "Su Rai 1 inizia ora: {{ trigger.to_state.state }}"
+```
+
+## Note
+La guida TV proviene da servizi di terze parti: completezza e accuratezza dipendono dalla sorgente scelta.

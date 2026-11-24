@@ -1,0 +1,38 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "TV Italia",
+        "description": "Scegli i canali del digitale terrestre da mostrare. La guida viene scaricata da una sorgente XMLTV pubblica.",
+        "data": {
+          "channels": "Canali",
+          "epg_url": "URL guida XMLTV (.xml o .xml.gz)",
+          "refresh_hours": "Aggiorna la guida ogni"
+        }
+      }
+    },
+    "error": {
+      "no_channels": "Seleziona almeno un canale.",
+      "invalid_url": "Inserisci un URL http(s) valido."
+    },
+    "abort": {
+      "single_instance_allowed": "TV Italia è già configurata."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opzioni TV Italia",
+        "data": {
+          "channels": "Canali",
+          "epg_url": "URL guida XMLTV (.xml o .xml.gz)",
+          "refresh_hours": "Aggiorna la guida ogni"
+        }
+      }
+    },
+    "error": {
+      "no_channels": "Seleziona almeno un canale.",
+      "invalid_url": "Inserisci un URL http(s) valido."
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "domain": "tv_italia",
+  "name": "TV Italia",
+  "codeowners": ["@massan71"],
+  "config_flow": true,
+  "dependencies": ["http", "frontend"],
+  "documentation": "https://github.com/massan71/ha-tv-italia",
+  "integration_type": "service",
+  "iot_class": "cloud_polling",
+  "issue_tracker": "https://github.com/massan71/ha-tv-italia/issues",
+  "requirements": [],
+  "single_config_entry": true,
+  "version": "1.0.0"
+}
