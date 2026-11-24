@@ -4,14 +4,27 @@
  *   type: custom:tv-italia-card
  *   title: Guida TV          # opzionale, "" per nasconderlo
  *   height: 320              # altezza dell'elenco in px (scorre se i canali sono di piu')
- *   view: now                # now | prime   (vista iniziale)
+ *   tabs: [now, next]        # schede: now (In onda) | next (A seguire) | prime (Stasera)
+ *   view: now                # scheda iniziale
  *   show_next: false         # mostra anche il programma successivo
  *   show_logo: true          # mostra i loghi dei canali
  *   platform: all            # all | dtt (digitale terrestre) | sky
  *   entities:                # opzionale: di default tutti i canali TV Italia
  *     - sensor.tv_rai1
  */
-const CARD_VERSION = "1.2.0";
+const CARD_VERSION = "1.3.0";
+
+const TAB_LABELS = { now: "In onda", next: "A seguire", prime: "Stasera" };
+
+// "tra 5 min", "tra 1 h 20 min"
+const fromNow = (iso) => {
+  if (!iso) return "";
+  const min = Math.max(0, Math.round((new Date(iso) - Date.now()) / 60000));
+  if (min < 1) return "ora";
+  if (min < 60) return `tra ${min} min`;
+  const h = Math.floor(min / 60), m = min % 60;
+  return `tra ${h} h${m ? ` ${m} min` : ""}`;
+};
 
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -58,19 +71,24 @@ const STYLE = `
 
 class TvItaliaCard extends HTMLElement {
   static getStubConfig() {
-    return { title: "Guida TV", height: 320, view: "now" };
+    return { title: "Guida TV", height: 320, tabs: ["now", "next"] };
   }
 
   setConfig(config) {
-    if (config.view && !["now", "prime"].includes(config.view)) {
-      throw new Error("view deve essere 'now' oppure 'prime'");
+    const tabs = config.tabs ?? ["now", "next"];
+    if (!Array.isArray(tabs) || !tabs.length || tabs.some((t) => !TAB_LABELS[t])) {
+      throw new Error("tabs deve essere un elenco di: now, next, prime");
+    }
+    if (config.view && !tabs.includes(config.view)) {
+      throw new Error(`view deve essere una delle schede: ${tabs.join(", ")}`);
     }
     if (config.platform && !["all", "dtt", "sky"].includes(config.platform)) {
       throw new Error("platform deve essere 'all', 'dtt' oppure 'sky'");
     }
     this._config = {
-      title: "Guida TV", height: 320, view: "now", show_next: false, show_logo: true, platform: "all", ...config,
+      title: "Guida TV", height: 320, show_next: false, show_logo: true, platform: "all", ...config, tabs,
     };
+    this._config.view = config.view ?? tabs[0];
     this._view = this._config.view;
     this._sig = null;
     this._built = false;
@@ -114,10 +132,8 @@ class TvItaliaCard extends HTMLElement {
       <ha-card>
         <div class="head">
           ${title ? `<h2>${esc(title)}</h2>` : ""}
-          <div class="tabs">
-            <button data-view="now">In onda</button>
-            <button data-view="prime">Stasera</button>
-          </div>
+          ${this._config.tabs.length > 1 ? `<div class="tabs">${this._config.tabs
+            .map((t) => `<button data-view="${t}">${TAB_LABELS[t]}</button>`).join("")}</div>` : ""}
         </div>
         <div class="list" style="max-height:${esc(h)}"></div>
       </ha-card>`;
@@ -180,6 +196,15 @@ class TvItaliaCard extends HTMLElement {
     let time = "", title, extra = "", bar = "";
     if (st.state === "unavailable" || st.state === "unknown") {
       title = `<div class="title dim">Guida non disponibile</div>`;
+    } else if (this._view === "next") {
+      const n = (a.upcoming && a.upcoming[0]) || (a.next_title ? { title: a.next_title, start: a.next_start } : null);
+      time = n ? `${hhmm(n.start)} · ${fromNow(n.start)}` : "";
+      title = n
+        ? `<div class="title">${esc(n.title)}</div>`
+        : `<div class="title dim">Nessuna informazione</div>`;
+      if (n && this._config.show_next && a.upcoming && a.upcoming[1]) {
+        extra = `<div class="next">Poi ${hhmm(a.upcoming[1].start)} ${esc(a.upcoming[1].title)}</div>`;
+      }
     } else if (this._view === "prime") {
       const p = a.prime_time;
       time = p ? `${hhmm(p.start)}–${hhmm(p.end)}` : "";

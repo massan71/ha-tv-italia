@@ -9,7 +9,7 @@ programma in onda, avanzamento, programma successivo e **prima serata**.
 - 46 canali del digitale terrestre con numerazione LCN (Rai, Mediaset, La7, TV8, NOVE, Cielo, Real Time, DMAX, …).
 - 35 canali Sky con la numerazione del decoder Sky (Sky TG24, Sky Uno, Sky Atlantic, Sky Sport, Sky Cinema, …).
 - I sensori si chiamano con il numero davanti (`001 · Rai 1`, `108 · Sky Uno`), così negli elenchi di Home Assistant sono in ordine di telecomando.
-- Card Lovelace inclusa (`custom:tv-italia-card`), compatta e scorrevole, caricata automaticamente, con le schede "In onda" e "Stasera".
+- Card Lovelace inclusa (`custom:tv-italia-card`), compatta e scorrevole, caricata automaticamente, con le schede "In onda" e "A seguire".
 - Configurazione da interfaccia, nessun YAML.
 - Guida da una sorgente XMLTV pubblica (di default [epgshare01](https://epgshare01.online)), sostituibile con qualsiasi URL XMLTV `.xml` o `.xml.gz`.
 
@@ -29,13 +29,15 @@ Puoi cambiare canali, URL della guida e frequenza di aggiornamento da **Configur
 ## Card
 
 Card compatta: un canale per riga (logo, numero, titolo, orario e barra di avanzamento) dentro un elenco
-ad altezza fissa che scorre. Le schede **In onda** e **Stasera** cambiano vista; toccando un canale si aprono i dettagli.
+ad altezza fissa che scorre. Le schede **In onda** e **A seguire** (con orario e "tra 20 min") cambiano vista;
+toccando un canale si aprono i dettagli. È disponibile anche la scheda **Stasera** (prima serata).
 
 ```yaml
 type: custom:tv-italia-card
 title: Guida TV      # "" per nascondere il titolo
 height: 320          # altezza dell'elenco in px: oltre, scorre
-view: now            # now | prime
+tabs: [now, next]    # now (In onda) | next (A seguire) | prime (Stasera)
+view: now            # scheda iniziale
 show_next: false     # mostra anche il programma successivo
 show_logo: true
 platform: all      # all | dtt (digitale terrestre) | sky

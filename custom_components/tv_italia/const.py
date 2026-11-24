@@ -20,7 +20,7 @@ PRIME_TIME_MINUTE = 30
 UPCOMING_COUNT = 6
 
 CARD_URL = "/tv_italia/tv-italia-card.js"
-CARD_VERSION = "1.2.0"
+CARD_VERSION = "1.3.0"
 
 
 @dataclass(frozen=True)
