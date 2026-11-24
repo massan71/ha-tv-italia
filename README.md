@@ -7,7 +7,7 @@ programma in onda, avanzamento, programma successivo e **prima serata**.
 
 - Un sensore per canale (`sensor.tv_rai1`, `sensor.tv_canale5`, …): lo stato è il titolo in onda.
 - 46 canali nazionali con numerazione LCN (Rai, Mediaset, La7, TV8, NOVE, Cielo, Real Time, DMAX, …).
-- Card Lovelace inclusa (`custom:tv-italia-card`), caricata automaticamente, con le schede "In onda" e "Stasera".
+- Card Lovelace inclusa (`custom:tv-italia-card`), compatta e scorrevole, caricata automaticamente, con le schede "In onda" e "Stasera".
 - Configurazione da interfaccia, nessun YAML.
 - Guida da una sorgente XMLTV pubblica (di default [epgshare01](https://epgshare01.online)), sostituibile con qualsiasi URL XMLTV `.xml` o `.xml.gz`.
 
@@ -26,17 +26,22 @@ Puoi cambiare canali, URL della guida e frequenza di aggiornamento da **Configur
 
 ## Card
 
+Card compatta: un canale per riga (logo, numero, titolo, orario e barra di avanzamento) dentro un elenco
+ad altezza fissa che scorre. Le schede **In onda** e **Stasera** cambiano vista; toccando un canale si aprono i dettagli.
+
 ```yaml
 type: custom:tv-italia-card
-title: Guida TV
-view: now          # now | prime
-show_next: true
-# entities:        # opzionale, di default tutti i canali configurati
+title: Guida TV      # "" per nascondere il titolo
+height: 320          # altezza dell'elenco in px: oltre, scorre
+view: now            # now | prime
+show_next: false     # mostra anche il programma successivo
+show_logo: true
+# entities:          # opzionale, di default tutti i canali configurati
 #   - sensor.tv_rai1
 #   - sensor.tv_canale5
 ```
 
-Se la card non compare dopo l'installazione, ricarica la pagina del browser (svuota la cache).
+Se la card non compare o non si aggiorna dopo l'installazione, ricarica la pagina del browser (svuota la cache).
 
 ## Attributi dei sensori
 
