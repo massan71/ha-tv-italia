@@ -40,9 +40,11 @@ async def async_setup_entry(
         if reg_entry.unique_id not in wanted:
             registry.async_remove(reg_entry.entity_id)
 
-    async_add_entities(
-        TvChannelSensor(coordinator, CHANNELS_BY_KEY[k]) for k in keys
+    # Ordine del telecomando: Rai 1, Rai 2, Rai 3, Rete 4, ...
+    channels = sorted(
+        (CHANNELS_BY_KEY[k] for k in keys), key=lambda c: (c.number == 0, c.number)
     )
+    async_add_entities(TvChannelSensor(coordinator, c) for c in channels)
 
 
 def _short(prog: Programme | None) -> dict[str, Any] | None:
@@ -72,7 +74,11 @@ class TvChannelSensor(CoordinatorEntity[TvItaliaCoordinator], SensorEntity):
         self._channel = channel
         entry_id = coordinator.config_entry.entry_id
         self._attr_unique_id = f"{entry_id}_{channel.key}"
-        self._attr_name = channel.name
+        # Il numero davanti al nome fa si' che Home Assistant, che ordina le
+        # entita' alfabeticamente, le mostri nell'ordine del telecomando.
+        self._attr_name = (
+            f"{channel.number:02d} · {channel.name}" if channel.number else channel.name
+        )
         self.entity_id = f"sensor.tv_{channel.key}"
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry_id)},

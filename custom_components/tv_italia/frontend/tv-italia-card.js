@@ -8,7 +8,7 @@
  *   entities:                  # opzionale: di default tutti i canali TV Italia
  *     - sensor.tv_rai1
  */
-const CARD_VERSION = "1.0.0";
+const CARD_VERSION = "1.0.1";
 
 const esc = (s) =>
   String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
