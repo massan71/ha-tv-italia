@@ -1,3 +1,5 @@
+<img src="icon.png" alt="" width="96" align="right">
+
 # TV Italia per Home Assistant
 
 Integrazione personalizzata che mostra i **canali televisivi italiani del digitale terrestre** con la guida TV:
@@ -61,6 +63,9 @@ actions:
     data:
       message: "Su Rai 1 inizia ora: {{ trigger.to_state.state }}"
 ```
+
+## Icona
+L'icona è inclusa in `custom_components/tv_italia/brand/` e viene mostrata da Home Assistant 2026.3 in poi.
 
 ## Note
 La guida TV proviene da servizi di terze parti: completezza e accuratezza dipendono dalla sorgente scelta.
