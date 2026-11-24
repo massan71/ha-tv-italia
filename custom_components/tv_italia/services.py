@@ -73,8 +73,11 @@ def async_setup_services(hass: HomeAssistant) -> None:
         )
         if platform != "all":
             channels = [c for c in channels if c.platform == platform]
-        if only_fav:
+        # Senza preferiti impostati, "solo preferiti" usa tutti i canali
+        if only_fav and coordinator.favorites:
             channels = [c for c in channels if c.key in coordinator.favorites]
+        else:
+            only_fav = False
 
         programmes = []
         lines = []

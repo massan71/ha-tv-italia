@@ -56,7 +56,7 @@
       "fields": {
         "only_favorites": {
           "name": "Favorites only",
-          "description": "Only include favorite channels."
+          "description": "Only include favorite channels (all channels if no favorites are set)."
         },
         "platform": {
           "name": "Platform",

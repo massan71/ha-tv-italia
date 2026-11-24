@@ -56,7 +56,7 @@
       "fields": {
         "only_favorites": {
           "name": "Solo preferiti",
-          "description": "Considera solo i canali preferiti."
+          "description": "Considera solo i canali preferiti (tutti i canali se non ci sono preferiti)."
         },
         "platform": {
           "name": "Piattaforma",
