@@ -34,5 +34,44 @@
       "no_channels": "Seleziona almeno un canale.",
       "invalid_url": "Inserisci un URL http(s) valido."
     }
+  },
+  "services": {
+    "set_favorite": {
+      "name": "Imposta canale preferito",
+      "description": "Aggiunge o toglie uno o più canali dai preferiti. Se 'Preferito' non è indicato, lo inverte.",
+      "fields": {
+        "entity_id": {
+          "name": "Canali",
+          "description": "I sensori dei canali di TV Italia."
+        },
+        "favorite": {
+          "name": "Preferito",
+          "description": "Attiva o disattiva. Se omesso, inverte lo stato."
+        }
+      }
+    },
+    "stasera": {
+      "name": "Stasera in TV",
+      "description": "Restituisce i programmi della prima serata (21:30), con un messaggio pronto per una notifica.",
+      "fields": {
+        "only_favorites": {
+          "name": "Solo preferiti",
+          "description": "Considera solo i canali preferiti."
+        },
+        "platform": {
+          "name": "Piattaforma",
+          "description": "Digitale terrestre, Sky o entrambi."
+        }
+      }
+    }
+  },
+  "selector": {
+    "platform": {
+      "options": {
+        "all": "Tutte",
+        "dtt": "Digitale terrestre",
+        "sky": "Sky"
+      }
+    }
   }
 }

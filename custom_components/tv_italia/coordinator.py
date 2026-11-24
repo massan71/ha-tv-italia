@@ -10,6 +10,7 @@ import aiohttp
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.storage import Store
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import dt as dt_util
 
@@ -22,8 +23,10 @@ from .const import (
     DEFAULT_EPG_URL,
     DEFAULT_REFRESH_HOURS,
     DOMAIN,
+    PRIME_TIME_HOUR,
+    PRIME_TIME_MINUTE,
 )
-from .epg import ChannelGuide, parse_xmltv, resolve_channel
+from .epg import ChannelGuide, Programme, parse_xmltv, programme_at, resolve_channel
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -53,6 +56,28 @@ class TvItaliaCoordinator(DataUpdateCoordinator[dict[str, ChannelGuide | None]])
         self._last_download: datetime | None = None
         self._last_attempt: datetime | None = None
         self._logos: dict[str, str | None] = {}
+        self._favorites_store: Store[list[str]] = Store(hass, 1, f"{DOMAIN}.favorites")
+        self.favorites: set[str] = set()
+
+    async def async_load_favorites(self) -> None:
+        """Carica i canali preferiti salvati (condivisi tra tutti i dispositivi)."""
+        self.favorites = set(await self._favorites_store.async_load() or [])
+
+    async def async_set_favorite(self, key: str, favorite: bool | None = None) -> bool:
+        """Aggiunge/toglie un preferito; con favorite=None lo inverte."""
+        if favorite is None:
+            favorite = key not in self.favorites
+        if favorite:
+            self.favorites.add(key)
+        else:
+            self.favorites.discard(key)
+        await self._favorites_store.async_save(sorted(self.favorites))
+        self.async_update_listeners()
+        return favorite
+
+    def programmes(self, key: str) -> list[Programme]:
+        guide = (self.data or {}).get(key)
+        return guide.programmes if guide else []
 
     def logo(self, key: str) -> str | None:
         """Logo funzionante del canale (verificato all'ultimo download)."""
@@ -169,3 +194,14 @@ class TvItaliaCoordinator(DataUpdateCoordinator[dict[str, ChannelGuide | None]])
             sum(1 for u in self._logos.values() if u),
         )
         return result
+
+
+def prime_time_programme(programmes: list[Programme], now: datetime) -> Programme | None:
+    """Programma in onda alle 21:30 di stasera (fino alle 3 vale la sera prima)."""
+    local_now = dt_util.as_local(now)
+    target = local_now.replace(
+        hour=PRIME_TIME_HOUR, minute=PRIME_TIME_MINUTE, second=0, microsecond=0
+    )
+    if local_now.hour < 3:
+        target -= timedelta(days=1)
+    return programme_at(programmes, target)

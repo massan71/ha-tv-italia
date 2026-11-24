@@ -199,3 +199,45 @@ def programme_at(programmes: list[Programme], when: datetime) -> Programme | Non
         if prog.start <= when < prog.stop:
             return prog
     return None
+
+
+# --- Generi -----------------------------------------------------------------
+# Generi semplificati mostrati nei filtri della card.
+GENRES = ("film", "serie", "sport", "news", "kids", "docs", "show")
+
+# Regole sulle categorie XMLTV (prima e seconda categoria, minuscole).
+# L'ordine conta: la prima regola che corrisponde vince.
+_GENRE_RULES: tuple[tuple[str, tuple[str, ...]], ...] = (
+    ("sport", ("sport", "calcio", "tennis", "motori", "basket", "golf", "rugby", "ciclismo")),
+    ("news", ("informazione", "telegiornale", "notiziario", "news", "attualita", "tg ")),
+    ("kids", ("cartoni", "bimbi", "kids", "ragazzi", "anime", "bambini", "live action",
+              "educativo", "famiglie")),
+    ("serie", ("serie", "fiction", "telefilm", "soap", "sit-com", "sitcom", "miniserie")),
+    ("film", ("film", "cinema", "commedia", "drammatico", "azione", "thriller", "avventura",
+              "fantasy", "fantastico", "poliziesco", "crime", "horror", "western", "romantico",
+              "fantascienza", "biografico", "giallo")),
+    ("docs", ("mondo e tendenze", "scoperta", "scienza", "storia", "natura", "documentari",
+              "spazio", "regno animale", "viaggi", "uomini", "arte", "cultura")),
+    ("show", ("intrattenimento", "show", "talk", "varietà", "varieta", "reality", "magazine",
+              "quiz", "musica", "lifestyle", "cucina")),
+)
+
+
+def genre_of(prog: Programme, default: str | None = None) -> str | None:
+    """Genere semplificato di un programma, o il genere tipico del canale."""
+    cats = [c.lower() for c in prog.categories[:2]]
+    if cats:
+        first = cats[0]
+        joined = " > ".join(cats)
+        # "Intrattenimento > Fiction" e' una serie, non uno show
+        if first == "intrattenimento" and len(cats) > 1:
+            for genre, words in _GENRE_RULES:
+                if any(w in cats[1] for w in words):
+                    return genre
+        for genre, words in _GENRE_RULES:
+            if any(w in first for w in words):
+                return genre
+        for genre, words in _GENRE_RULES:
+            if any(w in joined for w in words):
+                return genre
+    return default

@@ -41,12 +41,46 @@ view: now            # scheda iniziale
 show_next: false     # mostra anche il programma successivo
 show_logo: true
 platform: all      # all | dtt (digitale terrestre) | sky
+filters: true      # filtri per genere e Preferiti
+show_star: true    # stellina per i preferiti
+favorites_first: true
 # entities:          # opzionale, di default tutti i canali configurati
 #   - sensor.tv_rai1
 #   - sensor.tv_canale5
 ```
 
 Se la card non compare o non si aggiorna dopo l'installazione, ricarica la pagina del browser (svuota la cache).
+
+## Preferiti e filtri
+
+Tocca la ☆ accanto a un canale per metterlo tra i preferiti: finisce in cima all'elenco ed è
+salvato in Home Assistant, quindi vale su tutti i dispositivi. Sopra l'elenco ci sono i filtri
+**Preferiti, Film, Serie, Sport, Notizie, Bambini, Documentari, Show** (si vedono solo quelli con
+almeno un canale). Il genere viene dalle categorie della guida o, se mancano, dal tipo di canale.
+
+## Azioni
+
+| Azione | Cosa fa |
+|---|---|
+| `tv_italia.set_favorite` | Aggiunge/toglie canali dai preferiti (`entity_id`, `favorite` opzionale: se manca inverte) |
+| `tv_italia.stasera` | Restituisce la prima serata (21:30) con un `message` pronto per una notifica. Opzioni: `only_favorites`, `platform` |
+
+Notifica ogni sera alle 20:30:
+
+```yaml
+triggers:
+  - trigger: time
+    at: "20:30:00"
+actions:
+  - action: tv_italia.stasera
+    data:
+      only_favorites: true
+    response_variable: stasera
+  - action: notify.mobile_app_il_mio_telefono
+    data:
+      title: "📺 Stasera in TV"
+      message: "{{ stasera.message }}"
+```
 
 ## Attributi dei sensori
 
@@ -55,6 +89,7 @@ Se la card non compare o non si aggiorna dopo l'installazione, ricarica la pagin
 | `channel_number`, `channel_name`, `channel_group`, `channel_platform`, `channel_logo` | Dati del canale (`channel_platform`: `dtt` o `sky`) |
 | `start`, `end`, `progress`, `remaining_minutes` | Orari e avanzamento del programma in onda |
 | `subtitle`, `description`, `categories`, `episode`, `image` | Dettagli del programma |
+| `genre`, `favorite` | Genere del programma in onda e se il canale è tra i preferiti |
 | `next_title`, `next_start` | Programma successivo |
 | `upcoming` | Lista dei prossimi 6 programmi |
 | `prime_time` | Programma in onda alle 21:30 di stasera |

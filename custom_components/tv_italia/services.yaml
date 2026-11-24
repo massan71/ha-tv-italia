@@ -1,0 +1,30 @@
+set_favorite:
+  fields:
+    entity_id:
+      required: true
+      selector:
+        entity:
+          integration: tv_italia
+          multiple: true
+    favorite:
+      required: false
+      selector:
+        boolean:
+
+stasera:
+  fields:
+    only_favorites:
+      required: false
+      default: false
+      selector:
+        boolean:
+    platform:
+      required: false
+      default: all
+      selector:
+        select:
+          translation_key: platform
+          options:
+            - all
+            - dtt
+            - sky

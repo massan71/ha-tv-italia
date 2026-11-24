@@ -8,13 +8,24 @@ from homeassistant.components.http import StaticPathConfig
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import config_validation as cv
+from homeassistant.helpers.typing import ConfigType
 
 from .const import CARD_URL, CARD_VERSION, DOMAIN
 from .coordinator import TvItaliaCoordinator
+from .services import async_setup_services
 
 PLATFORMS: list[Platform] = [Platform.SENSOR]
 
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+
 type TvItaliaConfigEntry = ConfigEntry[TvItaliaCoordinator]
+
+
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
+    """Registra le azioni dell'integrazione."""
+    async_setup_services(hass)
+    return True
 
 
 async def _async_register_card(hass: HomeAssistant) -> None:
@@ -32,6 +43,7 @@ async def _async_register_card(hass: HomeAssistant) -> None:
 async def async_setup_entry(hass: HomeAssistant, entry: TvItaliaConfigEntry) -> bool:
     """Configura l'integrazione da una config entry."""
     coordinator = TvItaliaCoordinator(hass, entry)
+    await coordinator.async_load_favorites()
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinator
 

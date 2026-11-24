@@ -34,5 +34,44 @@
       "no_channels": "Select at least one channel.",
       "invalid_url": "Enter a valid http(s) URL."
     }
+  },
+  "services": {
+    "set_favorite": {
+      "name": "Set favorite channel",
+      "description": "Adds or removes one or more channels from favorites. If 'Favorite' is omitted, it toggles.",
+      "fields": {
+        "entity_id": {
+          "name": "Channels",
+          "description": "TV Italia channel sensors."
+        },
+        "favorite": {
+          "name": "Favorite",
+          "description": "Turn on or off. If omitted, toggles."
+        }
+      }
+    },
+    "stasera": {
+      "name": "Tonight on TV",
+      "description": "Returns tonight's prime-time programmes (21:30), with a message ready for a notification.",
+      "fields": {
+        "only_favorites": {
+          "name": "Favorites only",
+          "description": "Only include favorite channels."
+        },
+        "platform": {
+          "name": "Platform",
+          "description": "Free-to-air, Sky or both."
+        }
+      }
+    }
+  },
+  "selector": {
+    "platform": {
+      "options": {
+        "all": "All",
+        "dtt": "Free-to-air",
+        "sky": "Sky"
+      }
+    }
   }
 }

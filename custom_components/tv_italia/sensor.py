@@ -1,7 +1,6 @@
 """Sensori: un sensore per canale con il programma in onda."""
 from __future__ import annotations
 
-from datetime import datetime, timedelta
 from typing import Any
 
 from homeassistant.components.sensor import SensorEntity
@@ -13,16 +12,9 @@ from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.util import dt as dt_util
 
 from . import TvItaliaConfigEntry
-from .const import (
-    CHANNELS_BY_KEY,
-    DOMAIN,
-    PRIME_TIME_HOUR,
-    PRIME_TIME_MINUTE,
-    UPCOMING_COUNT,
-    Channel,
-)
-from .coordinator import TvItaliaCoordinator
-from .epg import Programme, current_and_upcoming, programme_at
+from .const import CHANNELS_BY_KEY, DOMAIN, UPCOMING_COUNT, Channel
+from .coordinator import TvItaliaCoordinator, prime_time_programme
+from .epg import Programme, current_and_upcoming, genre_of
 
 
 async def async_setup_entry(
@@ -48,7 +40,7 @@ async def async_setup_entry(
     async_add_entities(TvChannelSensor(coordinator, c) for c in channels)
 
 
-def _short(prog: Programme | None) -> dict[str, Any] | None:
+def _short(prog: Programme | None, default_genre: str | None) -> dict[str, Any] | None:
     if prog is None:
         return None
     return {
@@ -57,6 +49,7 @@ def _short(prog: Programme | None) -> dict[str, Any] | None:
         "start": prog.start.isoformat(),
         "end": prog.stop.isoformat(),
         "categories": prog.categories,
+        "genre": genre_of(prog, default_genre),
     }
 
 
@@ -92,8 +85,7 @@ class TvChannelSensor(CoordinatorEntity[TvItaliaCoordinator], SensorEntity):
 
     @property
     def _programmes(self) -> list[Programme]:
-        guide = (self.coordinator.data or {}).get(self._channel.key)
-        return guide.programmes if guide else []
+        return self.coordinator.programmes(self._channel.key)
 
     @property
     def available(self) -> bool:
@@ -110,16 +102,6 @@ class TvChannelSensor(CoordinatorEntity[TvItaliaCoordinator], SensorEntity):
     def entity_picture(self) -> str | None:
         return self.coordinator.logo(self._channel.key)
 
-    def _prime_time(self, now: datetime) -> Programme | None:
-        local_now = dt_util.as_local(now)
-        target = local_now.replace(
-            hour=PRIME_TIME_HOUR, minute=PRIME_TIME_MINUTE, second=0, microsecond=0
-        )
-        # Dopo mezzanotte e prima delle 3 consideriamo ancora la serata precedente
-        if local_now.hour < 3:
-            target -= timedelta(days=1)
-        return programme_at(self._programmes, target)
-
     @property
     def extra_state_attributes(self) -> dict[str, Any]:
         now = dt_util.utcnow()
@@ -133,7 +115,9 @@ class TvChannelSensor(CoordinatorEntity[TvItaliaCoordinator], SensorEntity):
             "channel_group": self._channel.group,
             "channel_platform": self._channel.platform,
             "channel_logo": self.coordinator.logo(self._channel.key),
+            "favorite": self._channel.key in self.coordinator.favorites,
         }
+        genre = self._channel.genre
         if current:
             duration = (current.stop - current.start).total_seconds()
             elapsed = (now - current.start).total_seconds()
@@ -142,6 +126,7 @@ class TvChannelSensor(CoordinatorEntity[TvItaliaCoordinator], SensorEntity):
                     "subtitle": current.subtitle,
                     "description": current.description,
                     "categories": current.categories,
+                    "genre": genre_of(current, genre),
                     "episode": current.episode,
                     "image": current.icon,
                     "start": current.start.isoformat(),
@@ -155,8 +140,8 @@ class TvChannelSensor(CoordinatorEntity[TvItaliaCoordinator], SensorEntity):
         nxt = upcoming[0] if upcoming else None
         attrs["next_title"] = nxt.title if nxt else None
         attrs["next_start"] = nxt.start.isoformat() if nxt else None
-        attrs["upcoming"] = [_short(p) for p in upcoming]
-        attrs["prime_time"] = _short(self._prime_time(now))
+        attrs["upcoming"] = [_short(p, genre) for p in upcoming]
+        attrs["prime_time"] = _short(prime_time_programme(self._programmes, now), genre)
         if self.coordinator.last_download:
             attrs["guide_updated"] = self.coordinator.last_download.isoformat()
         return attrs
